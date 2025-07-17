@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎧📱 Telegram Audio App</title>
+    <style>
+        body { 
+            font-family: sans-serif; 
+            background: #f8f8f8; 
+            margin: 0; 
+            padding: 10px; 
+        }
+        
+        .header {
+            background: #007bff;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        
+        .logout-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .status-bar {
+            background: #28a745;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            font-weight: bold;
+            display: none;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            display: none;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: #007bff;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        .tabs {
+            display: flex;
+            background: white;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            background: #f8f9fa;
+            border: none;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+        
+        .tab.active {
+            background: #007bff;
+            color: white;
+        }
+        
+        .tab:hover:not(.active) {
+            background: #e9ecef;
+        }
+        
+        .tab-content {
+            display: none;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .form-row > div {
+            flex: 1;
+        }
+        
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .btn:hover {
+            background: #0056b3;
+        }
+        
+        .btn-success {
+            background: #28a745;
+        }
+        
+        .btn-success:hover {
+            background: #1e7e34;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        
+        .item-list {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            background: #fafafa;
+            margin: 15px 0;
+        }
+        
+        .item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            border: 1px solid #eee;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            background: white;
+        }
+        
+        .item img {
+            width: 80px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 5px;
+        }
+        
+        .item-content {
+            flex: 1;
+        }
+        
+        .item-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .item-meta {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .log-box {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+        
+        .select-all {
+            margin-bottom: 10px;
+        }
+        
+        .audio-player {
+            width: 100%;
+            margin-top: 10px;
+        }
+        
+        .file-upload {
+            border: 2px dashed #ddd;
+            border-radius: 5px;
+            padding: 20px;
+            text-align: center;
+            margin: 15px 0;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+        
+        .file-upload:hover {
+            border-color: #007bff;
+        }
+        
+        .file-upload.dragover {
+            border-color: #007bff;
+            background: #f0f8ff;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎧📱 Telegram Audio App</h1>
+        <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+    
+    <div class="status-bar" id="statusBar"></div>
+    
+    <div class="progress-bar" id="progressBar">
+        <div class="progress-fill" id="progressFill"></div>
+    </div>
+    
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab('audio')">🎧 Audio Extractor</button>
+        <button class="tab" onclick="switchTab('telegram')">📱 Telegram Extractor</button>
+    </div>
+    
+    <!-- Audio Extractor Tab -->
+    <div class="tab-content active" id="audioTab">
+        <h2>🎧 Audio Extractor</h2>
+        
+        <div class="form-row">
+            <div>
+                <label>YouTube Channel URL:</label>
+                <input type="text" id="channelUrl" value="https://www.youtube.com/@ncert_audio_books" placeholder="Enter YouTube channel URL">
+            </div>
+        </div>
+        
+        <div>
+            <button class="btn" onclick="searchYouTube()">🔍 Search Videos</button>
+            <button class="btn btn-success" onclick="extractAudio()">🎵 Extract Selected</button>
+        </div>
+        
+        <div class="select-all">
+            <label>
+                <input type="checkbox" id="selectAllVideos" onchange="selectAllItems('videos')"> 
+                Select All Videos
+            </label>
+        </div>
+        
+        <div class="item-list" id="videoList">
+            <p>Click "Search Videos" to load YouTube videos...</p>
+        </div>
+        
+        <h3>🎶 Your Extracted Audio Files</h3>
+        <div>
+            <button class="btn btn-success" onclick="refreshAudioFiles()">🔄 Refresh</button>
+            <button class="btn" onclick="downloadSelectedAudio()">📦 Download Selected as ZIP</button>
+        </div>
+        
+        <div class="select-all">
+            <label>
+                <input type="checkbox" id="selectAllAudio" onchange="selectAllItems('audio')"> 
+                Select All Audio Files
+            </label>
+        </div>
+        
+        <div class="item-list" id="audioList">
+            <p>No audio files found. Extract some videos first!</p>
+        </div>
+        
+        <h3>📤 Upload Video File</h3>
+        <div class="file-upload" id="videoUpload" onclick="document.getElementById('videoFile').click()">
+            <p>Click here or drag & drop a video file to extract audio</p>
+            <input type="file" id="videoFile" accept="video/*" style="display: none;" onchange="uploadVideo()">
+        </div>
+    </div>
+    
+    <!-- Telegram Extractor Tab -->
+    <div class="tab-content" id="telegramTab">
+        <h2>📱 Telegram Extractor/Forwarder</h2>
+        
+        <div class="form-row">
+            <div>
+                <label>Telegram Channel/Group URL:</label>
+                    <input type="text" id="telegramUrl" placeholder="https://t.me/channel_name or @channel_name" value="https://t.me/arjunaa_neet_25">
+            </div>
+        </div>
+        
+        <div class="form-row">
+            <div>
+                <label>API ID:</label>
+                <input type="text" id="apiId" placeholder="Your Telegram API ID" value="28403662">
+            </div>
+            <div>
+                <label>API Hash:</label>
+                <input type="text" id="apiHash" placeholder="Your Telegram API Hash" value="079509d4ac7f209a1a58facd00d6ff5a">
+            </div>
+        </div>
+        
+        <div class="form-row">
+            <div>
+                <label>Target Channel/Group:</label>
+                <input type="text" id="targetChannel" placeholder="Target channel for forwarding">
+            </div>
+            <div>
+                <label>Message Filter:</label>
+                <select id="messageFilter">
+                    <option value="all">All Messages</option>
+                    <option value="text">Text Only</option>
+                    <option value="photo">Photos Only</option>
+                    <option value="video">Videos Only</option>
+                    <option value="document">Documents Only</option>
+                    <option value="audio">Audio Only</option>
+                </select>
+            </div>
+        </div>
+        
+        <div>
+            <button class="btn" onclick="searchTelegram()">🔍 Search Messages</button>
+            <button class="btn btn-success" onclick="forwardMessages()">📤 Forward Selected</button>
+            <button class="btn" onclick="downloadTelegramMedia()">💾 Download Selected Media</button>
+        </div>
+        
+        <div class="select-all">
+            <label>
+                <input type="checkbox" id="selectAllMessages" onchange="selectAllItems('messages')"> 
+                Select All Messages
+            </label>
+        </div>
+        
+        <div class="item-list" id="messageList">
+            <p>Enter Telegram credentials and click "Search Messages" to load messages...</p>
+        </div>
+    </div>
+    
+    <!-- Log Section -->
+    <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+        <h3>📋 Application Log</h3>
+        <button class="btn btn-danger" onclick="clearLog()">🗑️ Clear Log</button>
+        <div class="log-box" id="logBox">Loading...</div>
+    </div>
+    
+    <script>
+        let currentTab = 'audio';
+        let videos = [];
+        let audioFiles = [];
+        let messages = [];
+        
+        // Check authentication on page load
+        window.onload = function() {
+            checkAuth();
+            refreshLog();
+            setInterval(refreshLog, 3000); // Refresh log every 3 seconds
+        };
+        
+        async function checkAuth() {
+            try {
+                const response = await fetch('/check_auth');
+                const data = await response.json();
+                if (!data.authenticated) {
+                    window.location.href = '/login';
+                }
+            } catch (error) {
+                console.error('Auth check failed:', error);
+                window.location.href = '/login';
+            }
+        }
+        
+        async function logout() {
+            try {
+                await fetch('/logout', { method: 'POST' });
+                window.location.href = '/login';
+            } catch (error) {
+                console.error('Logout failed:', error);
+            }
+        }
+        
+        function switchTab(tab) {
+            // Update tab buttons
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelector(`[onclick="switchTab('${tab}')"]`).classList.add('active');
+            
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.getElementById(tab + 'Tab').classList.add('active');
+            
+            currentTab = tab;
+        }
+        
+        function showStatus(message, type = 'info') {
+            const statusBar = document.getElementById('statusBar');
+            statusBar.textContent = message;
+            statusBar.style.display = 'block';
+            
+            // Set color based on type
+            if (type === 'success') {
+                statusBar.style.background = '#28a745';
+            } else if (type === 'error') {
+                statusBar.style.background = '#dc3545';
+            } else {
+                statusBar.style.background = '#007bff';
+            }
+            
+            // Hide after 5 seconds
+            setTimeout(() => {
+                statusBar.style.display = 'none';
+            }, 5000);
+        }
+        
+        function showProgress(value = 0) {
+            const progressBar = document.getElementById('progressBar');
+            const progressFill = document.getElementById('progressFill');
+            
+            if (value > 0) {
+                progressBar.style.display = 'block';
+                progressFill.style.width = value + '%';
+            } else {
+                progressBar.style.display = 'none';
+            }
+        }
+        
+        function selectAllItems(type) {
+            const checkbox = document.getElementById('selectAll' + type.charAt(0).toUpperCase() + type.slice(1));
+            const checkboxes = document.querySelectorAll(`input[name="${type}"]`);
+            
+            checkboxes.forEach(cb => {
+                cb.checked = checkbox.checked;
+            });
+        }
+        
+        // Audio Extractor Functions
+        async function searchYouTube() {
+            const channelUrl = document.getElementById('channelUrl').value;
+            if (!channelUrl) {
+                showStatus('Please enter a YouTube channel URL', 'error');
+                return;
+            }
+            
+            showStatus('🔍 Searching YouTube videos...', 'info');
+            showProgress(10);
+            
+            try {
+                const response = await fetch('/api/audio/search_youtube', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ channel_url: channelUrl })
+                });
+                
+                const data = await response.json();
+                if (response.ok) {
+                    showStatus('✅ YouTube search started', 'success');
+                    showProgress(50);
+                    
+                    // Poll for videos
+                    setTimeout(loadVideos, 3000);
+                } else {
+                    showStatus('❌ Search failed: ' + data.error, 'error');
+                    showProgress(0);
+                }
+            } catch (error) {
+                showStatus('❌ Search failed: ' + error.message, 'error');
+                showProgress(0);
+            }
+        }
+        
+        async function loadVideos() {
+            try {
+                const response = await fetch('/api/audio/get_videos');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    videos = data;
+                    displayVideos();
+                    showStatus('✅ Videos loaded successfully', 'success');
+                    showProgress(100);
+                    setTimeout(() => showProgress(0), 1000);
+                }
+            } catch (error) {
+                console.error('Failed to load videos:', error);
+            }
+        }
+        
+        function displayVideos() {
+            const videoList = document.getElementById('videoList');
+            
+            if (videos.length === 0) {
+                videoList.innerHTML = '<p>No videos found. Try a different channel URL.</p>';
+                return;
+            }
+            
+            videoList.innerHTML = videos.map(video => `
+                <div class="item">
+                    <input type="checkbox" name="videos" value="${video.id}">
+                    <img src="https://i.ytimg.com/vi/${video.id}/hqdefault.jpg" alt="Thumbnail">
+                    <div class="item-content">
+                        <div class="item-title">${video.title}</div>
+                        <div class="item-meta">
+                            <a href="https://www.youtube.com/watch?v=${video.id}" target="_blank">▶️ Watch on YouTube</a>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        async function extractAudio() {
+            const selectedVideos = Array.from(document.querySelectorAll('input[name="videos"]:checked')).map(cb => cb.value);
+            
+            if (selectedVideos.length === 0) {
+                showStatus('Please select at least one video', 'error');
+                return;
+            }
+            
+            showStatus(`🎵 Extracting audio from ${selectedVideos.length} videos...`, 'info');
+            showProgress(25);
+            
+            try {
+                const response = await fetch('/api/audio/extract_audio', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ video_ids: selectedVideos })
+                });
+                
+                const data = await response.json();
+                if (response.ok) {
+                    showStatus('✅ Audio extraction started', 'success');
+                    showProgress(50);
+                } else {
+                    showStatus('❌ Extraction failed: ' + data.error, 'error');
+                    showProgress(0);
+                }
+            } catch (error) {
+                showStatus('❌ Extraction failed: ' + error.message, 'error');
+                showProgress(0);
+            }
+        }
+        
+        async function refreshAudioFiles() {
+            try {
+                const response = await fetch('/api/audio/get_audio_files');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    audioFiles = data;
+                    displayAudioFiles();
+                }
+            } catch (error) {
+                console.error('Failed to load audio files:', error);
+            }
+        }
+        
+        function displayAudioFiles() {
+            const audioList = document.getElementById('audioList');
+            
+            if (audioFiles.length === 0) {
+                audioList.innerHTML = '<p>No audio files found. Extract some videos first!</p>';
+                return;
+            }
+            
+            audioList.innerHTML = audioFiles.map(file => `
+                <div class="item">
+                    <input type="checkbox" name="audio" value="${file}">
+                    <div class="item-content">
+                        <div class="item-title">${file}</div>
+                        <audio class="audio-player" controls>
+                            <source src="/api/audio/play/${file}" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                        <div class="item-meta">
+                            <a href="/api/audio/download/${file}" download>⬇️ Download</a>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        async function downloadSelectedAudio() {
+            const selectedFiles = Array.from(document.querySelectorAll('input[name="audio"]:checked')).map(cb => cb.value);
+            
+            if (selectedFiles.length === 0) {
+                showStatus('Please select at least one audio file', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/audio/download_zip', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ files: selectedFiles })
+                });
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'audios.zip';
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    showStatus('✅ ZIP download started', 'success');
+                } else {
+                    showStatus('❌ Download failed', 'error');
+                }
+            } catch (error) {
+                showStatus('❌ Download failed: ' + error.message, 'error');
+            }
+        }
+        
+        async function uploadVideo() {
+            const fileInput = document.getElementById('videoFile');
+            const file = fileInput.files[0];
+            
+            if (!file) return;
+            
+            showStatus('📤 Uploading video file...', 'info');
+            showProgress(25);
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                const response = await fetch('/api/audio/upload_video', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                if (response.ok) {
+                    showStatus('✅ Video uploaded, audio extraction started', 'success');
+                    showProgress(50);
+                    fileInput.value = ''; // Clear file input
+                } else {
+                    showStatus('❌ Upload failed: ' + data.error, 'error');
+                    showProgress(0);
+                }
+            } catch (error) {
+                showStatus('❌ Upload failed: ' + error.message, 'error');
+                showProgress(0);
+            }
+        }
+        
+        // Telegram Functions
+        async function searchTelegram() {
+            const channelUrl = document.getElementById('telegramUrl').value;
+            const apiId = document.getElementById('apiId').value;
+            const apiHash = document.getElementById('apiHash').value;
+            const messageFilter = document.getElementById('messageFilter').value;
+            
+            if (!channelUrl || !apiId || !apiHash) {
+                showStatus('Please fill in all Telegram credentials', 'error');
+                return;
+            }
+            
+            showStatus('🔍 Searching Telegram messages...', 'info');
+            showProgress(10);
+            
+            try {
+                const response = await fetch('/api/telegram/search_messages', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        channel_url: channelUrl,
+                        api_id: apiId,
+                        api_hash: apiHash,
+                        message_filter: messageFilter,
+                        limit: 100
+                    })
+                });
+                
+                const data = await response.json();
+                if (response.ok) {
+                    showStatus('✅ Telegram search started', 'success');
+                    showProgress(50);
+                    
+                    // Poll for messages
+                    setTimeout(loadMessages, 5000);
+                } else {
+                    showStatus('❌ Search failed: ' + data.error, 'error');
+                    showProgress(0);
+                }
+            } catch (error) {
+                showStatus('❌ Search failed: ' + error.message, 'error');
+                showProgress(0);
+            }
+        }
+        
+        async function loadMessages() {
+            try {
+                const response = await fetch('/api/telegram/get_messages');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    messages = data;
+                    displayMessages();
+                    showStatus('✅ Messages loaded successfully', 'success');
+                    showProgress(100);
+                    setTimeout(() => showProgress(0), 1000);
+                }
+            } catch (error) {
+                console.error('Failed to load messages:', error);
+            }
+        }
+        
+        function displayMessages() {
+            const messageList = document.getElementById('messageList');
+            
+            if (messages.length === 0) {
+                messageList.innerHTML = '<p>No messages found. Try different search criteria.</p>';
+                return;
+            }
+            
+            messageList.innerHTML = messages.map(message => `
+                <div class="item">
+                    <input type="checkbox" name="messages" value="${message.id}">
+                    <div class="item-content">
+                        <div class="item-title">
+                            ${message.type === 'media' ? '📎 ' : '💬 '}
+                            ${message.text ? message.text.substring(0, 100) + (message.text.length > 100 ? '...' : '') : '[Media Message]'}
+                        </div>
+                        <div class="item-meta">
+                            ID: ${message.id} | 
+                            Date: ${new Date(message.date).toLocaleString()} | 
+                            Type: ${message.media_type || 'text'}
+                            ${message.file_name ? ' | File: ' + message.file_name : ''}
+                            ${message.file_size ? ' | Size: ' + Math.round(message.file_size / 1024) + ' KB' : ''}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        async function forwardMessages() {
+            const selectedMessages = Array.from(document.querySelectorAll('input[name="messages"]:checked')).map(cb => cb.value);
+            const sourceChannel = document.getElementById('telegramUrl').value;
+            const targetChannel = document.getElementById('targetChannel').value;
+            const apiId = document.getElementById('apiId').value;
+            const apiHash = document.getElementById('apiHash').value;
+            
+            if (selectedMessages.length === 0) {
+                showStatus('Please select at least one message', 'error');
+                return;
+            }
+            
+            if (!targetChannel) {
+                showStatus('Please enter target channel', 'error');
+                return;
+            }
+            
+            showStatus(`📤 Forwarding ${selectedMessages.length} messages...`, 'info');
+            showProgress(25);
+            
+            try {
+                const response = await fetch('/api/telegram/forward_messages', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        source_channel: sourceChannel,
+                        target_channel: targetChannel,
+                        message_ids: selectedMessages,
+                        api_id: apiId,
+                        api_hash: apiHash
+                    })
+                });
+                
+                const data = await response.json();
+                if (response.ok) {
+                    showStatus('✅ Message forwarding started', 'success');
+                    showProgress(50);
+                } else {
+                    showStatus('❌ Forwarding failed: ' + data.error, 'error');
+                    showProgress(0);
+                }
+            } catch (error) {
+                showStatus('❌ Forwarding failed: ' + error.message, 'error');
+                showProgress(0);
+            }
+        }
+        
+        async function downloadTelegramMedia() {
+            const selectedMessages = Array.from(document.querySelectorAll('input[name="messages"]:checked')).map(cb => cb.value);
+            const channelUrl = document.getElementById('telegramUrl').value;
+            const apiId = document.getElementById('apiId').value;
+            const apiHash = document.getElementById('apiHash').value;
+            
+            if (selectedMessages.length === 0) {
+                showStatus('Please select at least one message', 'error');
+                return;
+            }
+            
+            showStatus(`💾 Downloading media from ${selectedMessages.length} messages...`, 'info');
+            showProgress(25);
+            
+            try {
+                const response = await fetch('/api/telegram/download_media', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        channel_url: channelUrl,
+                        message_ids: selectedMessages,
+                        api_id: apiId,
+                        api_hash: apiHash
+                    })
+                });
+                
+                const data = await response.json();
+                if (response.ok) {
+                    showStatus('✅ Media download started', 'success');
+                    showProgress(50);
+                } else {
+                    showStatus('❌ Download failed: ' + data.error, 'error');
+                    showProgress(0);
+                }
+            } catch (error) {
+                showStatus('❌ Download failed: ' + error.message, 'error');
+                showProgress(0);
+            }
+        }
+        
+        // Log Functions
+        async function refreshLog() {
+            try {
+                const response = await fetch('/api/log');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    const logBox = document.getElementById('logBox');
+                    logBox.textContent = data.log;
+                    logBox.scrollTop = logBox.scrollHeight; // Auto-scroll to bottom
+                }
+            } catch (error) {
+                console.error('Failed to refresh log:', error);
+            }
+        }
+        
+        async function clearLog() {
+            try {
+                const response = await fetch('/api/clear_log', { method: 'POST' });
+                if (response.ok) {
+                    document.getElementById('logBox').textContent = '';
+                    showStatus('✅ Log cleared', 'success');
+                }
+            } catch (error) {
+                showStatus('❌ Failed to clear log', 'error');
+            }
+        }
+        
+        // Drag and drop for video upload
+        const videoUpload = document.getElementById('videoUpload');
+        
+        videoUpload.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            videoUpload.classList.add('dragover');
+        });
+        
+        videoUpload.addEventListener('dragleave', () => {
+            videoUpload.classList.remove('dragover');
+        });
+        
+        videoUpload.addEventListener('drop', (e) => {
+            e.preventDefault();
+            videoUpload.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                document.getElementById('videoFile').files = files;
+                uploadVideo();
+            }
+        });
+        
+        // Load audio files on page load
+        setTimeout(refreshAudioFiles, 1000);
+    </script>
+</body>
+</html>
+
