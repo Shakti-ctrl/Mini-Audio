@@ -1,5 +1,0 @@
-Flask
-yt-dlp
-requests
-ffmpeg-python
-werkzeug
